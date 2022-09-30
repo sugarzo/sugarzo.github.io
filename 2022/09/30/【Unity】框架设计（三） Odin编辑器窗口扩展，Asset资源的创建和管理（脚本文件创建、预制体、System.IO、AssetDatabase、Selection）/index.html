@@ -1,0 +1,628 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="前言一般当游戏规模开始大时，为了制作游戏后期的维护性，就可以考虑做资源管理和编辑器扩展了。一是可以集成一些制作流程，省去一些重复操作的步骤，二是更方便项目数据的规范和管理性。今天来分享一下如何在unity中做编辑器窗口的拓展，并实现一些简单的功能。例如根据模板自动创建脚本（System.IO）、创建预制体(AssetDatabase)、读取指定文件夹下的资源、根据鼠标选中的资源批量创建Script">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity 框架设计（三） Odin编辑器窗口扩展，Asset资源的创建和管理（脚本文件创建、预制体、System.IO、AssetDatabase、Selection）">
+<meta property="og:url" content="http://example.com/2022/09/30/%E3%80%90Unity%E3%80%91%E6%A1%86%E6%9E%B6%E8%AE%BE%E8%AE%A1%EF%BC%88%E4%B8%89%EF%BC%89%20Odin%E7%BC%96%E8%BE%91%E5%99%A8%E7%AA%97%E5%8F%A3%E6%89%A9%E5%B1%95%EF%BC%8CAsset%E8%B5%84%E6%BA%90%E7%9A%84%E5%88%9B%E5%BB%BA%E5%92%8C%E7%AE%A1%E7%90%86%EF%BC%88%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA%E3%80%81%E9%A2%84%E5%88%B6%E4%BD%93%E3%80%81System.IO%E3%80%81AssetDatabase%E3%80%81Selection%EF%BC%89/index.html">
+<meta property="og:site_name" content="Sugarzo的个人博客">
+<meta property="og:description" content="前言一般当游戏规模开始大时，为了制作游戏后期的维护性，就可以考虑做资源管理和编辑器扩展了。一是可以集成一些制作流程，省去一些重复操作的步骤，二是更方便项目数据的规范和管理性。今天来分享一下如何在unity中做编辑器窗口的拓展，并实现一些简单的功能。例如根据模板自动创建脚本（System.IO）、创建预制体(AssetDatabase)、读取指定文件夹下的资源、根据鼠标选中的资源批量创建Script">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/d5763d45104a478ba37097529803bcf8.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/655ec709e5684ad48f57cb4be4254bfa.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/f5e3ee8fb90f4a97a6c5256713045f2c.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/f658ad67125c484cbb9b52dbc5757fc6.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/ec29ade6eeb843728ead05cd9f13ff80.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/4f492d9dfc4b41549470b7a9f7ed6b29.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/3b71eb51d90c4caea2f9b6059ad37e62.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/18a8e90c0ddd419bb347f9752be99976.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/5e3ba47ba40b483c9c6364cf2f749de8.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/b3e64e8cd3a64df6a387617b83ab48b7.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/d0ff278295c04b48923618aecc9636eb.png">
+<meta property="article:published_time" content="2022-09-30T10:00:00.000Z">
+<meta property="article:modified_time" content="2022-09-30T15:35:11.975Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="unity">
+<meta property="article:tag" content="unity框架设计">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/d5763d45104a478ba37097529803bcf8.png">
+  
+  
+  
+  <title>Unity 框架设计（三） Odin编辑器窗口扩展，Asset资源的创建和管理（脚本文件创建、预制体、System.IO、AssetDatabase、Selection） - Sugarzo的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.3","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Unity 框架设计（三） Odin编辑器窗口扩展，Asset资源的创建和管理（脚本文件创建、预制体、System.IO、AssetDatabase、Selection）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-09-30 18:00" pubdate>
+          2022年9月30日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          13k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          108 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Unity 框架设计（三） Odin编辑器窗口扩展，Asset资源的创建和管理（脚本文件创建、预制体、System.IO、AssetDatabase、Selection）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>一般当游戏规模开始大时，为了制作游戏后期的维护性，就可以考虑做资源管理和编辑器扩展了。一是可以集成一些制作流程，省去一些重复操作的步骤，二是更方便项目数据的规范和管理性。今天来分享一下如何在unity中做编辑器窗口的拓展，并实现一些简单的功能。例如根据模板自动创建脚本（System.IO）、创建预制体(AssetDatabase)、读取指定文件夹下的资源、根据鼠标选中的资源批量创建ScriptableObject等（Selection）。</p>
+<p>实现效果如下图：<br><img src="https://img-blog.csdnimg.cn/d5763d45104a478ba37097529803bcf8.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"></p>
+<h1 id="功能实现"><a href="#功能实现" class="headerlink" title="功能实现"></a>功能实现</h1><p>因为本期所有内容均是在Unity编辑器内的内容，在游戏运行或者打包出来时并不起到作用，因此本期的脚本建议都放在项目Assets/Editor文件夹中，或者使用如下的编辑器宏定义，让打包时不再将这些内容添加到实际的包中。（有些代码只在编辑器模式下有效，打包时会报错）</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-meta">#<span class="hljs-keyword">if</span> UNITY_EDITOR</span><br><span class="hljs-comment">//该部分代码只在编辑器模式下生效</span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+<p>本期用到了一些Odin的比较方便的特性（Attritube），如果有更进一步的兴趣可以去看看其他教程或者官方文档哦。</p>
+<h2 id="编辑器窗口的拓展"><a href="#编辑器窗口的拓展" class="headerlink" title="编辑器窗口的拓展"></a>编辑器窗口的拓展</h2><p>在Unity内置的GUI中，我们可以使用新建一个脚本类，继承EditorWindow的方法，通过MenuItem的属性表示一个静态方法，实现打开编辑器窗口的效果。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">using</span> UnityEditor;<br><span class="hljs-keyword">using</span> UnityEngine;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">FlowChartEdit</span> : <span class="hljs-title">EditorWindow</span><br>&#123;<br>    <span class="hljs-comment">//菜单栏顶部显示目录</span><br>    [<span class="hljs-meta">MenuItem(<span class="hljs-string">&quot;FlowChart/FlowChart&quot;</span>)</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">OpenWindow</span>()</span><br>    &#123;<br>        FlowChartEdit wnd = GetWindow&lt;FlowChartEdit&gt;();<br>        wnd.titleContent = <span class="hljs-keyword">new</span> GUIContent(<span class="hljs-string">&quot;FlowChart&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://img-blog.csdnimg.cn/655ec709e5684ad48f57cb4be4254bfa.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"><br>Unity GUI中，如果想要绘制各种属性需要比较繁琐的步骤，Odin插件为我们的编辑器窗口实现了更方便的属性，我们修改类继承自OdinWindow，下面展示一个简单的功能。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">OdinWindowTest</span>:<span class="hljs-title">OdinEditorWindow</span><br>&#123;<br>    [<span class="hljs-meta">MenuItem(<span class="hljs-string">&quot;Tools/OdinWindowTest&quot;</span>)</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">ShowWindow</span>()</span><br>    &#123;<br>        <span class="hljs-keyword">var</span> window = GetWindow&lt;OdinWindowTest&gt;();<br>        window.Show();<br>    &#125;<br><br>    [<span class="hljs-meta">LabelText(<span class="hljs-string">&quot;学生姓名&quot;</span>)</span>] <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> StudentName;<br><br>    [<span class="hljs-meta">LabelText(<span class="hljs-string">&quot;英文成绩&quot;</span>)</span>] <span class="hljs-keyword">public</span> <span class="hljs-built_in">float</span> EnglishScore;<br>    [<span class="hljs-meta">LabelText(<span class="hljs-string">&quot;数学成绩&quot;</span>)</span>] <span class="hljs-keyword">public</span> <span class="hljs-built_in">float</span> MathScore;<br>    [<span class="hljs-meta">LabelText(<span class="hljs-string">&quot;美术成绩&quot;</span>)</span>] <span class="hljs-keyword">public</span> <span class="hljs-built_in">float</span> ArtScore;<br><br>    [<span class="hljs-meta">ReadOnly,LabelText(<span class="hljs-string">&quot;总成绩&quot;</span>)</span>] <span class="hljs-keyword">public</span> <span class="hljs-built_in">float</span> totalScore;<br><br>    [<span class="hljs-meta">Button(<span class="hljs-string">&quot;计算总成绩&quot;</span>,ButtonSizes.Large,Style =ButtonStyle.Box),</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">GetTotalScore</span>()</span><br>    &#123;<br>        totalScore = EnglishScore + MathScore + ArtScore;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://img-blog.csdnimg.cn/f5e3ee8fb90f4a97a6c5256713045f2c.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"><br>如果想实现左右分栏，左边类似树状结构的窗口。我们也可以继承自OdinMenuEditorWindow，通过重载BuildMenuTree()函数去实现它。下面演示的脚本为，通过在窗口中添加某个文件夹下所有的ScriptableObject。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">using</span> UnityEditor;<br><span class="hljs-keyword">using</span> Sirenix.OdinInspector.Editor;<br><span class="hljs-keyword">using</span> Sirenix.Utilities.Editor;<br><span class="hljs-keyword">using</span> UnityEngine;<br><span class="hljs-keyword">using</span> Sirenix.Utilities;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">OdinConfigWindow</span> : <span class="hljs-title">OdinMenuEditorWindow</span><br>&#123;<br>	[<span class="hljs-meta">MenuItem(<span class="hljs-string">&quot;Sugarzo/项目配置设置&quot;</span>)</span>]<br>	<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">OpenWindow</span>()</span><br>	&#123;<br>		<span class="hljs-keyword">var</span> window = GetWindow&lt;OdinConfigWindow&gt;();<br>		window.position = GUIHelper.GetEditorWindowRect().AlignCenter(<span class="hljs-number">720</span>, <span class="hljs-number">720</span>);<br>		window.titleContent = <span class="hljs-keyword">new</span> GUIContent(<span class="hljs-string">&quot;项目配置设置&quot;</span>);<br>	&#125;<br><br>	<span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">override</span> OdinMenuTree <span class="hljs-title">BuildMenuTree</span>()</span><br>	&#123;<br>		<span class="hljs-keyword">var</span> tree = <span class="hljs-keyword">new</span> OdinMenuTree();<br>		<span class="hljs-comment">//这里的第一个参数为窗口名字，第二个参数为指定目录，第三个参数为需要什么类型，第四个参数为是否在家该文件夹下的子文件夹</span><br>		tree.AddAllAssetsAtPath(<span class="hljs-string">&quot;项目配置设置&quot;</span>, <span class="hljs-string">&quot;Assets/SugarFrame/Configs&quot;</span>, <span class="hljs-keyword">typeof</span>(ScriptableObject), <span class="hljs-literal">true</span>);<br>		<span class="hljs-keyword">return</span> tree;<br>	&#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<p>指定文件下下的内容的ScriptableObject<br><img src="https://img-blog.csdnimg.cn/f658ad67125c484cbb9b52dbc5757fc6.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"><br>打开编辑器窗口后，可以看到该文件夹下的内容已被显示在Odin窗口中。<br><img src="https://img-blog.csdnimg.cn/ec29ade6eeb843728ead05cd9f13ff80.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"></p>
+<h2 id="根据模板文件生成脚本"><a href="#根据模板文件生成脚本" class="headerlink" title="根据模板文件生成脚本"></a>根据模板文件生成脚本</h2><p>当我们写好了基类的基本功能，后续扩展功能时只需要继承这个基类。如果我们每次想要新建一个类，都需要新建一个C#类，然后手动修改名字，修改继承关系，写出overrive需要拓展的功能的方法字段，就会比较麻烦。回想一下Unity给我们新建Monobehaviour脚本时，都会默认写好一个基本模板，里面已经有了Start()方法和Update()可以直接写逻辑。这里我们也实现一个根据模板创建cs文件的方法。</p>
+<p>首先我们已经先建立一个txt文件，里面写好我们需要的默认模板（里面的#TTT#是用来替换的，也可以换成其他标识符）<br><img src="https://img-blog.csdnimg.cn/4f492d9dfc4b41549470b7a9f7ed6b29.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"><br>如何创建一个脚本文件呢，其实借助System.IO功能很简单，大体就是先知道路径，File.Create创建文件<br>，写入字节流就搞定了。以下是核心代码</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-comment">//选择的文件路径，因为是脚本文件，这里需要后缀带有.cs;</span><br><span class="hljs-built_in">string</span> filepath = sfd.file; <br>Debug.Log(<span class="hljs-string">&quot;保存 &quot;</span> + filepath);<br><br><span class="hljs-keyword">var</span> fStream = File.Create(filepath);<br><span class="hljs-comment">//template为已经设计好的string对象，将里面的内容全部写入文件</span><br><span class="hljs-keyword">var</span> bytes = System.Text.Encoding.UTF8.GetBytes(template);<br>fStream.Write(bytes, <span class="hljs-number">0</span>, bytes.Length);<br><br>fStream.Close();<br></code></pre></td></tr></table></figure>
+<p>我们可以用TextAsset保存文本文件,[FolderPath]特性指定需要的文件夹。修改一下内容就可以直接写入了。这里我们做的扩展一点，可以打开电脑的文件管理文件夹自定义把内容放在什么地方。拿下面的窗口来举例。<br><img src="https://img-blog.csdnimg.cn/3b71eb51d90c4caea2f9b6059ad37e62.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"><br>当我们按下【CreateScript】按钮后，打开资源管理文件夹：<br><img src="https://img-blog.csdnimg.cn/18a8e90c0ddd419bb347f9752be99976.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"><br>点击保存后，就可以将Code窗口里的代码保存在选中的路径上了。<br>源码如下，注意当修改了项目资源后，最好使用AssetDatabase.Refresh()将项目刷新一遍</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">using</span> Sirenix.OdinInspector;<br><span class="hljs-keyword">using</span> UnityEditor;<br><span class="hljs-keyword">using</span> UnityEngine;<br><br>[<span class="hljs-meta">CreateAssetMenu(fileName = <span class="hljs-string">&quot;编辑器拓展/状态机设置&quot;</span>)</span>]<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">StatusExtraTool</span> : <span class="hljs-title">ScriptableObject</span><br>&#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">enum</span> CreateType<br>    &#123; <br>        新建Trigger,<br>        新建Action,<br>    &#125;<br><br>    <span class="hljs-keyword">public</span> TextAsset actionScriptText;<br>    <span class="hljs-keyword">public</span> TextAsset triggerScriptText;<br>    [<span class="hljs-meta">Space</span>]<br>    [<span class="hljs-meta">BoxGroup, EnumToggleButtons,HideLabel</span>]<br>    <span class="hljs-keyword">public</span> CreateType createType;<br>    [<span class="hljs-meta">BoxGroup,LabelText(<span class="hljs-string">&quot;脚本名&quot;</span>)</span>]<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> title;<br>    [<span class="hljs-meta">Button,BoxGroup</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">CreateScript</span>()</span><br>    &#123;<br>        <span class="hljs-keyword">if</span>(createType == CreateType.新建Trigger &amp;&amp; !title.Contains(<span class="hljs-string">&quot;Trigger&quot;</span>))<br>        &#123;<br>            Debug.Log(<span class="hljs-string">&quot;脚本名需要以Trigger为后缀&quot;</span>);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (createType == CreateType.新建Action &amp;&amp; !title.Contains(<span class="hljs-string">&quot;Action&quot;</span>))<br>        &#123;<br>            Debug.Log(<span class="hljs-string">&quot;脚本名需要以Action为后缀&quot;</span>);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>		<span class="hljs-comment">//将路径和需要新建的文本传入，打开资源管理文件夹</span><br>        FileManager.SaveScriptFile(title, Code);<br>        <span class="hljs-comment">//重载资源</span><br>        AssetDatabase.Refresh();<br>    &#125;<br><br>    [<span class="hljs-meta">TextArea(20,30),ReadOnly</span>]<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> Code;<br><br>    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">OnValidate</span>()</span><br>    &#123;<br>    	<span class="hljs-comment">//替换上文提到的#TTT#</span><br>        <span class="hljs-keyword">if</span>(triggerScriptText &amp;&amp; createType == CreateType.新建Trigger)<br>        &#123;<br>            Code = triggerScriptText.ToString().Replace(<span class="hljs-string">&quot;#TTT#&quot;</span>, title);<br>        &#125;<br>        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (actionScriptText &amp;&amp; createType == CreateType.新建Action)<br>        &#123;<br>            Code = actionScriptText.ToString().Replace(<span class="hljs-string">&quot;#TTT#&quot;</span>, title);<br>        &#125;<br>        <span class="hljs-keyword">else</span><br>        &#123;<br>            Code = <span class="hljs-string">&quot;缺少脚本的模板文件&quot;</span>;<br>        &#125;<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<p>这里的打开文件管理窗口的代码，引入了系统目录的Comdlg32.dll<del>（比较长，没读懂也没事，能用就行</del> </p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">using</span> UnityEngine;<br><span class="hljs-keyword">using</span> System;<br><span class="hljs-keyword">using</span> System.Runtime.InteropServices;<br><span class="hljs-keyword">using</span> System.IO;<br><span class="hljs-keyword">using</span> UnityEditor;<br><span class="hljs-keyword">using</span> System.Collections.Generic;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title">FileManager</span><br>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">OpenFile</span>()</span><br>    &#123;<br>        OpenFileDlg ofd = <span class="hljs-keyword">new</span> OpenFileDlg();<br>        ofd.structSize = Marshal.SizeOf(ofd);<br>        ofd.filter = <span class="hljs-string">&quot;txt files\0*.txt\0All Files\0*.*\0\0&quot;</span>;<br>        ofd.file = <span class="hljs-keyword">new</span> <span class="hljs-built_in">string</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">char</span>[<span class="hljs-number">256</span>]);<br>        ofd.maxFile = ofd.file.Length;<br>        ofd.fileTitle = <span class="hljs-keyword">new</span> <span class="hljs-built_in">string</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">char</span>[<span class="hljs-number">64</span>]);<br>        ofd.maxFileTitle = ofd.fileTitle.Length;<br>        ofd.initialDir = Application.dataPath; <span class="hljs-comment">//默认路径</span><br>        ofd.title = <span class="hljs-string">&quot;打开文件&quot;</span>;<br>        ofd.defExt = <span class="hljs-string">&quot;txt&quot;</span>;<br>        ofd.flags = <span class="hljs-number">0x00080000</span> | <span class="hljs-number">0x00001000</span> | <span class="hljs-number">0x00000800</span> | <span class="hljs-number">0x00000200</span> | <span class="hljs-number">0x00000008</span>;<br>        <span class="hljs-keyword">if</span> (OpenFileDialog.GetOpenFileName(ofd))<br>        &#123;<br>            <span class="hljs-built_in">string</span> filepath = ofd.file; <span class="hljs-comment">//选择的文件路径;  </span><br>            Debug.Log(<span class="hljs-string">&quot;打开 &quot;</span> + filepath);<br>        &#125;<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">SaveFile</span>()</span><br>    &#123;<br>        SaveFileDlg sfd = <span class="hljs-keyword">new</span> SaveFileDlg();<br>        sfd.structSize = Marshal.SizeOf(sfd);<br>        sfd.filter = <span class="hljs-string">&quot;txt files\0*.txt\0All Files\0*.*\0\0&quot;</span>;<br>        sfd.file = <span class="hljs-keyword">new</span> <span class="hljs-built_in">string</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">char</span>[<span class="hljs-number">256</span>]);<br>        sfd.maxFile = sfd.file.Length;<br>        sfd.fileTitle = <span class="hljs-keyword">new</span> <span class="hljs-built_in">string</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">char</span>[<span class="hljs-number">64</span>]);<br>        sfd.maxFileTitle = sfd.fileTitle.Length;<br>        sfd.initialDir = Application.dataPath; <span class="hljs-comment">//默认路径</span><br>        sfd.title = <span class="hljs-string">&quot;保存文件&quot;</span>;<br>        sfd.defExt = <span class="hljs-string">&quot;txt&quot;</span>;<br>        sfd.flags = <span class="hljs-number">0x00080000</span> | <span class="hljs-number">0x00001000</span> | <span class="hljs-number">0x00000800</span> | <span class="hljs-number">0x00000200</span> | <span class="hljs-number">0x00000008</span>;<br>        <span class="hljs-keyword">if</span> (SaveFileDialog.GetSaveFileName(sfd))<br>        &#123;<br>            <span class="hljs-built_in">string</span> filepath = sfd.file; <span class="hljs-comment">//选择的文件路径;</span><br>            Debug.Log(<span class="hljs-string">&quot;保存 &quot;</span> + filepath);<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">//保存脚本文件</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">SaveScriptFile</span>(<span class="hljs-params"><span class="hljs-built_in">string</span> fileTitle,<span class="hljs-built_in">string</span> template,<span class="hljs-built_in">string</span> defaultFolderPath = <span class="hljs-string">&quot;&quot;</span></span>)</span><br>    &#123;<br>        SaveFileDlg sfd = <span class="hljs-keyword">new</span> SaveFileDlg();<br>        sfd.structSize = Marshal.SizeOf(sfd);<br>        sfd.filter = <span class="hljs-string">&quot;cs files\0*.cs\0All Files\0*.*\0\0&quot;</span>;<br>        sfd.file = <span class="hljs-keyword">new</span> <span class="hljs-built_in">string</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">char</span>[<span class="hljs-number">256</span>]);<br>        sfd.maxFile = sfd.file.Length;<br>        sfd.fileTitle = <span class="hljs-keyword">new</span> <span class="hljs-built_in">string</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">char</span>[<span class="hljs-number">64</span>]);<br>        sfd.maxFileTitle = sfd.fileTitle.Length;<br>        sfd.initialDir = Application.dataPath; <span class="hljs-comment">//默认路径</span><br>        sfd.title = <span class="hljs-string">&quot;保存文件&quot;</span>;<br>        sfd.defExt = <span class="hljs-string">&quot;txt&quot;</span>;<br>        sfd.flags = <span class="hljs-number">0x00080000</span> | <span class="hljs-number">0x00001000</span> | <span class="hljs-number">0x00000800</span> | <span class="hljs-number">0x00000200</span> | <span class="hljs-number">0x00000008</span>;<br><br>        sfd.file = <span class="hljs-keyword">new</span> <span class="hljs-built_in">string</span>(fileTitle);<br><br>        <span class="hljs-keyword">if</span> (SaveFileDialog.GetSaveFileName(sfd))<br>        &#123;<br>            <span class="hljs-built_in">string</span> filepath = sfd.file; <span class="hljs-comment">//选择的文件路径;</span><br>            Debug.Log(<span class="hljs-string">&quot;保存 &quot;</span> + filepath);<br><br>            <span class="hljs-keyword">var</span> fStream = File.Create(filepath);<br>            <span class="hljs-keyword">var</span> bytes = System.Text.Encoding.UTF8.GetBytes(template);<br>            fStream.Write(bytes, <span class="hljs-number">0</span>, bytes.Length);<br><br>            fStream.Close();<br>        &#125;<br>        <br>    &#125;<br>&#125;<br><br>[<span class="hljs-meta">StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)</span>]<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">FileDlog</span><br>&#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">int</span> structSize = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> IntPtr dlgOwner = IntPtr.Zero;<br>    <span class="hljs-keyword">public</span> IntPtr instance = IntPtr.Zero;<br>    <span class="hljs-keyword">public</span> String filter = <span class="hljs-literal">null</span>;<br>    <span class="hljs-keyword">public</span> String customFilter = <span class="hljs-literal">null</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">int</span> maxCustFilter = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">int</span> filterIndex = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> String file = <span class="hljs-literal">null</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">int</span> maxFile = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> String fileTitle = <span class="hljs-literal">null</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">int</span> maxFileTitle = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> String initialDir = <span class="hljs-literal">null</span>;<br>    <span class="hljs-keyword">public</span> String title = <span class="hljs-literal">null</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">int</span> flags = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">short</span> fileOffset = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">short</span> fileExtension = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> String defExt = <span class="hljs-literal">null</span>;<br>    <span class="hljs-keyword">public</span> IntPtr custData = IntPtr.Zero;<br>    <span class="hljs-keyword">public</span> IntPtr hook = IntPtr.Zero;<br>    <span class="hljs-keyword">public</span> String templateName = <span class="hljs-literal">null</span>;<br>    <span class="hljs-keyword">public</span> IntPtr reservedPtr = IntPtr.Zero;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">int</span> reservedInt = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">int</span> flagsEx = <span class="hljs-number">0</span>;<br>&#125;<br><br>[<span class="hljs-meta">StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)</span>]<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">OpenFileDlg</span> : <span class="hljs-title">FileDlog</span><br>&#123;<br>&#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">OpenFileDialog</span><br>&#123;<br>    [<span class="hljs-meta">DllImport(<span class="hljs-string">&quot;Comdlg32.dll&quot;</span>, SetLastError = true, ThrowOnUnmappableChar = true, CharSet = CharSet.Auto)</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">extern</span> <span class="hljs-built_in">bool</span> <span class="hljs-title">GetOpenFileName</span>(<span class="hljs-params">[In, Out] OpenFileDlg ofn</span>)</span>;<br>&#125;<br><br>[<span class="hljs-meta">StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)</span>]<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">SaveFileDlg</span> : <span class="hljs-title">FileDlog</span><br>&#123;<br>&#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">SaveFileDialog</span><br>&#123;<br>    [<span class="hljs-meta">DllImport(<span class="hljs-string">&quot;Comdlg32.dll&quot;</span>, SetLastError = true, ThrowOnUnmappableChar = true, CharSet = CharSet.Auto)</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">extern</span> <span class="hljs-built_in">bool</span> <span class="hljs-title">GetSaveFileName</span>(<span class="hljs-params">[In, Out] SaveFileDlg ofn</span>)</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="创建预制体和ScriptableObject"><a href="#创建预制体和ScriptableObject" class="headerlink" title="创建预制体和ScriptableObject"></a>创建预制体和ScriptableObject</h2><p>接下来如何创建资源了，一般Unity最常用的资源就是预制体和ScriptableObject了，我们先创建一个基类</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">using</span> Sirenix.OdinInspector;<br><span class="hljs-keyword">using</span> UnityEngine;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">interface</span> <span class="hljs-title">IAssetCreator</span><br>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">Create</span>()</span>;<br>&#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">abstract</span> <span class="hljs-keyword">class</span> <span class="hljs-title">BaseAssetCreator</span> : <span class="hljs-title">ScriptableObject</span>, <span class="hljs-title">IAssetCreator</span><br>&#123;<br>    [<span class="hljs-meta">FolderPath</span>]<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> createPath;<br>    [<span class="hljs-meta">Space</span>]<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> createFileName;<br><br>    [<span class="hljs-meta">Button</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">abstract</span> <span class="hljs-keyword">void</span> <span class="hljs-title">Create</span>()</span>;<br><br>    <span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-built_in">bool</span> <span class="hljs-title">IsEmptyVariable</span>()</span><br>    &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">string</span>.IsNullOrEmpty(createPath) || <span class="hljs-built_in">string</span>.IsNullOrEmpty(createFileName);<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<p>首先是新建预制体，使用PrefabUtility类的API可以保存</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">using</span> UnityEditor;<br><span class="hljs-keyword">using</span> UnityEngine;<br>[<span class="hljs-meta">CreateAssetMenu(menuName = <span class="hljs-string">&quot;编辑器拓展/PrefabCreator&quot;</span>)</span>]<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">PrefabCreator</span> : <span class="hljs-title">BaseAssetCreator</span><br>&#123;<br>    <span class="hljs-keyword">public</span> GameObject prototype;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">override</span> <span class="hljs-keyword">void</span> <span class="hljs-title">Create</span>()</span><br>    &#123;<br>        <span class="hljs-keyword">if</span> (IsEmptyVariable() || prototype == <span class="hljs-literal">null</span>)<br>            <span class="hljs-keyword">return</span>;<br><br>        <span class="hljs-keyword">var</span> newGo = Instantiate(prototype);<br>        PrefabUtility.SaveAsPrefabAsset(newGo, createPath + <span class="hljs-string">&quot;/&quot;</span>+ createFileName + <span class="hljs-string">&quot;.prefab&quot;</span>);<br>        DestroyImmediate(newGo);<br><br>        AssetDatabase.Refresh();<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<p>ScriptableObject类，可以使用AssetDataBase()，注意结尾都需要AssetDatabase.Refresh()一下。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">using</span> UnityEditor;<br><span class="hljs-keyword">using</span> UnityEngine;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">ScriptableObjectCreatorT</span>&lt;<span class="hljs-title">T</span>&gt; : <span class="hljs-title">BaseAssetCreator</span> <span class="hljs-keyword">where</span> <span class="hljs-title">T</span> : <span class="hljs-title">ScriptableObject</span><br>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">override</span> <span class="hljs-keyword">void</span> <span class="hljs-title">Create</span>()</span><br>    &#123;<br>        <span class="hljs-keyword">if</span> (IsEmptyVariable())<br>            <span class="hljs-keyword">return</span>;<br><br>        <span class="hljs-keyword">var</span> go = ScriptableObject.CreateInstance&lt;T&gt;();<br><br>        AssetDatabase.CreateAsset(go, createPath + <span class="hljs-string">&quot;/&quot;</span> + createFileName + <span class="hljs-string">&quot;.asset&quot;</span>);<br>        AssetDatabase.SaveAssets();<br>        AssetDatabase.Refresh();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="读取指定目录-鼠标选中下的Assets资源"><a href="#读取指定目录-鼠标选中下的Assets资源" class="headerlink" title="读取指定目录/鼠标选中下的Assets资源"></a>读取指定目录/鼠标选中下的Assets资源</h2><p>项目有时候会遇到需要读取某一目录下所有资源，用于加载一些内容。虽然AssetDatabase.LoadAllAssetsAtPath或者Resources.LoadAll可以实现类似功能，但都没有返回类型数组（或者List）类型的指定泛型版本，这里用一种System.IO遍历+LoadAssetAtPath<T>的方式去实现它。</p>
+<p>例如这里我新建了很多对话，但还没有和目标配置文件同步。<br><img src="https://img-blog.csdnimg.cn/5e3ba47ba40b483c9c6364cf2f749de8.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"><br>设置好路径，按下按钮，可以看到该文件下文件已被同步<br><img src="https://img-blog.csdnimg.cn/b3e64e8cd3a64df6a387617b83ab48b7.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"><br>这里的对话状态窗口代码如下：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-meta">#<span class="hljs-keyword">if</span> UNITY_EDITOR</span><br>    [<span class="hljs-meta">Header(<span class="hljs-string">&quot;同步配置&quot;</span>)</span>]<br><br>    [<span class="hljs-meta">FolderPath</span>]<br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> pfbPath;<br>    [<span class="hljs-meta">Button</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">LoadPfb</span>()</span><br>    &#123;<br>        datas.Clear();<br><br>        <span class="hljs-keyword">var</span> dialoguePfbs = FileHelper.GetFiles&lt;DialogueData&gt;(pfbPath);<br>        <br>        <span class="hljs-keyword">foreach</span> (<span class="hljs-keyword">var</span> pfb <span class="hljs-keyword">in</span> dialoguePfbs)<br>        &#123;<br>            datas.Add(<span class="hljs-keyword">new</span> Data(pfb));<br>        &#125;<br><br>        Debug.Log(<span class="hljs-string">&quot;加载&quot;</span> + datas.Count + <span class="hljs-string">&quot;个对话&quot;</span>);<br>    &#125;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+
+<p>FileHelper是我们自己写的方法，代码如下</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs csharp">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-title">List</span>&lt;<span class="hljs-title">T</span>&gt; <span class="hljs-title">GetFiles</span>&lt;<span class="hljs-title">T</span>&gt;(<span class="hljs-params"><span class="hljs-built_in">string</span> dir</span>) <span class="hljs-keyword">where</span> T : UnityEngine.Object</span><br>    &#123;<br>        <span class="hljs-built_in">string</span> path = <span class="hljs-built_in">string</span>.Format(dir);<br>        <span class="hljs-keyword">var</span> list = <span class="hljs-keyword">new</span> List&lt;T&gt;();<br>        <span class="hljs-comment">//获取指定路径下面的所有资源文件  </span><br>        <span class="hljs-keyword">if</span> (Directory.Exists(path))<br>        &#123;<br>            DirectoryInfo direction = <span class="hljs-keyword">new</span> DirectoryInfo(path);<br>            FileInfo[] files = direction.GetFiles(<span class="hljs-string">&quot;*&quot;</span>);<br><br>            <span class="hljs-keyword">for</span> (<span class="hljs-built_in">int</span> i = <span class="hljs-number">0</span>; i &lt; files.Length; i++)<br>            &#123;<br>                <span class="hljs-comment">//忽略关联文件</span><br>                <span class="hljs-keyword">if</span> (files[i].Name.EndsWith(<span class="hljs-string">&quot;.meta&quot;</span>))<br>                &#123;<br>                    <span class="hljs-keyword">continue</span>;<br>                &#125;<br><span class="hljs-meta">#<span class="hljs-keyword">if</span> UNITY_EDITOR      </span><br>                <span class="hljs-keyword">var</span> so = AssetDatabase.LoadAssetAtPath&lt;T&gt;(dir + <span class="hljs-string">&quot;/&quot;</span> + files[i].Name);<br>                <span class="hljs-keyword">if</span> (so != <span class="hljs-literal">null</span>)<br>                &#123;<br>                    Debug.Log(<span class="hljs-string">&quot;加载资源&quot;</span> + files[i].Name);<br>                    list.Add(so <span class="hljs-keyword">as</span> T);<br>                &#125;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>            &#125;<br>        &#125;<br><br>        <span class="hljs-keyword">return</span> list;<br>    &#125;<br></code></pre></td></tr></table></figure>
+<p>除了指定文件夹下的资源外，有时候我们可能需要知道鼠标选中的资源。例如在我们的框架设计中，音效资源被我们封装成了一个ScriptableObject。<br><img src="https://img-blog.csdnimg.cn/d0ff278295c04b48923618aecc9636eb.png" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"></p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">AudioSo</span> : <span class="hljs-title">ScriptableObject</span><br> &#123;<br>     [<span class="hljs-meta">TextArea, LabelText(<span class="hljs-string">&quot;注释&quot;</span>)</span>]<br>     <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> text;<br><br>     <span class="hljs-keyword">public</span> AudioClip audioData;<br>     [<span class="hljs-meta">LabelText(<span class="hljs-string">&quot;音轨选择&quot;</span>)</span>]<br>     <span class="hljs-keyword">public</span> AudioMixerGroup outputGroup;<br><br>     [<span class="hljs-meta">LabelText(<span class="hljs-string">&quot;音频相对音量&quot;</span>), Range(0, 1)</span>]<br>     <span class="hljs-keyword">public</span> <span class="hljs-built_in">float</span> volume = <span class="hljs-number">0.5f</span>;<br><br>     [<span class="hljs-meta">LabelText(<span class="hljs-string">&quot;是否循环播放&quot;</span>)</span>]<br>     <span class="hljs-keyword">public</span> <span class="hljs-built_in">bool</span> loop;<br><br>     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">override</span> <span class="hljs-built_in">string</span> <span class="hljs-title">ToString</span>()</span><br>     &#123;<br>         <span class="hljs-keyword">return</span> name;<br>     &#125;<br><br> &#125;<br></code></pre></td></tr></table></figure>
+<p>但是有时候，如果导入了一批新的音效（AudioClip，或者说是mp3格式）需要添加进项目中，一个个新建ScrpitableObject手动设置肯定是很麻烦的，使用文件夹配置好像也不太方便，这时候最好是可以鼠标选中一批clip，然后根据选中的资源来生成对于的文件，此时Selection.assetGUIDs就可以派上用场了，它可以知道我们选中的文件在项目中的目录位置，代码如下：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs csharp">[<span class="hljs-meta">Button(<span class="hljs-string">&quot;选择音效资源然后创建&quot;</span>)</span>]<br>    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">CreateAudioSo</span>()</span><br>    &#123;<br>    	<span class="hljs-comment">//验证路径</span><br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">string</span>.IsNullOrEmpty(audioSoPath))<br>            <span class="hljs-keyword">return</span>;<br><br>        <span class="hljs-comment">//选择音效资源然后点击创建</span><br>        <span class="hljs-keyword">foreach</span> (<span class="hljs-keyword">var</span> guiD <span class="hljs-keyword">in</span> Selection.assetGUIDs)<br>        &#123;<br>            <span class="hljs-keyword">var</span> path = AssetDatabase.GUIDToAssetPath(guiD);<br>            <span class="hljs-keyword">var</span> audioClip = AssetDatabase.LoadAssetAtPath&lt;AudioClip&gt;(path);<br>            <span class="hljs-keyword">if</span> (audioClip != <span class="hljs-literal">null</span>)<br>            &#123;<br>            	<span class="hljs-comment">//同步文件并保存</span><br>                <span class="hljs-keyword">var</span> so = ScriptableObject.CreateInstance&lt;AudioSo&gt;();<br>                so.name = <span class="hljs-string">&quot;AudioSo-&quot;</span> + audioClip.name;<br>                so.audioData = audioClip;<br><br>                AssetDatabase.CreateAsset(so, audioSoPath + <span class="hljs-string">&quot;/&quot;</span> + so.name + <span class="hljs-string">&quot;.asset&quot;</span>);<br>                AssetDatabase.SaveAssets();<br>                AssetDatabase.Refresh();<br>            &#125;<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>想起这个月的面试，面试官问我：你的项目有用到什么技术亮点嘛介绍一下。回想自己好像真没写什么特别难的技术，自己做游戏吧说到底好像就是造轮子，然后搭完框架就拼图，写一些简单的算法啥的。</p>
+<p>实际上写项目印象最深的就是初期写各个系统的时候吧。一是如何思考如何组织各个系统，就像软件工程的一大目标：高内聚低耦合，中间就要用到各种各样的设计模式。二是造出各种各样的工具，遇到重复的操作时想办法把这段逻辑抽象出来，然后复用，也是规范程序格式。（关于工具，最近在学习unity UIBuilder和Graphview，想自己造一个可视化节点的事件触发器）。其实框架设计思想，最终目的都是为了方便项目的进一步扩展，优化制作流程管线（毕竟如果只是写技术demo或者只是几天的gamejam比赛，肯定不会写那么复杂啦）</p>
+<p><del>应该还是会有下期吧（大概）</del>文章里提到了很多系统（对话excel同步啊，音频，窗口管理啊）也可以拆开讲讲，不过都比较简单了，下次一定！</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/unity/">#unity</a>
+      
+        <a href="/tags/unity%E6%A1%86%E6%9E%B6%E8%AE%BE%E8%AE%A1/">#unity框架设计</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/08/23/%5BUE%5D%20%E5%9C%A8%E8%99%9A%E5%B9%BB%E4%B8%AD%E4%BD%BF%E7%94%A8%E5%8A%A8%E7%94%BB%E5%BA%8F%E5%88%97%E5%92%8C%E5%88%86%E5%B1%82%E9%AA%A8%E9%AA%BC%E6%B7%B7%E5%90%88%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0%E8%A7%92%E8%89%B2%E7%9C%8B%E5%90%91_Sugarzo%E7%9A%84%E5%8D%9A%E5%AE%A2/" title="UE 在虚幻中使用动画序列和分层骨骼混合简单实现角色看向">
+                        <span class="hidden-mobile">UE 在虚幻中使用动画序列和分层骨骼混合简单实现角色看向</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

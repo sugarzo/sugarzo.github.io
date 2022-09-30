@@ -1,0 +1,653 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="这里是lz大二上的编译原理实验课，课设要求模仿编译器的原理思想，用编译语言设计能够识别单词和简单语法的编译，当时摸了两天左右写了小一千行，在这里再回顾一下思路，并留下对应的源码供参考。 实验实现的方法有很多种，其中实验一的词法分析部分比较简单，这里重点分析语法分析部分。 题目需求：    实验一：词法分析这里用了stl::map等提前存储单词记录出现次数即可。这里就不展开详细描述了。一些具体细节的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="编译原理课程设计 设计SAMPLE语言的语法分析器 github源码（C++、LL(1)分析、语法制导翻译和中间代码生成）">
+<meta property="og:url" content="http://example.com/2022/05/20/%E3%80%90%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86%20%E8%AF%BE%E7%A8%8B%E8%AE%BE%E8%AE%A1%E3%80%91%E8%AE%BE%E8%AE%A1SAMPLE%E8%AF%AD%E8%A8%80%E7%9A%84%E8%AF%AD%E6%B3%95%E5%88%86%E6%9E%90%E5%99%A8%20github%E6%BA%90%E7%A0%81%EF%BC%88C++%E3%80%81LL(1)%E5%88%86%E6%9E%90%E3%80%81%E8%AF%AD%E6%B3%95%E5%88%B6%E5%AF%BC%E7%BF%BB%E8%AF%91%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90/index.html">
+<meta property="og:site_name" content="Sugarzo的个人博客">
+<meta property="og:description" content="这里是lz大二上的编译原理实验课，课设要求模仿编译器的原理思想，用编译语言设计能够识别单词和简单语法的编译，当时摸了两天左右写了小一千行，在这里再回顾一下思路，并留下对应的源码供参考。 实验实现的方法有很多种，其中实验一的词法分析部分比较简单，这里重点分析语法分析部分。 题目需求：    实验一：词法分析这里用了stl::map等提前存储单词记录出现次数即可。这里就不展开详细描述了。一些具体细节的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/f4e5ff2cb6ef4f089a5f53919efd698a.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/ac3d41b4770c4bb9957f9571bdfbb2f9.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/e1489e79494842d4aea4d5ebd2e8a19b.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/6cc9bc7b2085449490925bcabc259c4d.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/7a391a7f0dcc4113ad6f64f0c6ffd3d4.png">
+<meta property="article:published_time" content="2022-05-20T13:00:00.000Z">
+<meta property="article:modified_time" content="2022-09-30T15:30:21.615Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="编译原理">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/f4e5ff2cb6ef4f089a5f53919efd698a.png">
+  
+  
+  
+  <title>编译原理课程设计 设计SAMPLE语言的语法分析器 github源码（C++、LL(1)分析、语法制导翻译和中间代码生成） - Sugarzo的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.3","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="编译原理课程设计 设计SAMPLE语言的语法分析器 github源码（C++、LL(1)分析、语法制导翻译和中间代码生成）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-05-20 21:00" pubdate>
+          2022年5月20日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          11k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          90 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">编译原理课程设计 设计SAMPLE语言的语法分析器 github源码（C++、LL(1)分析、语法制导翻译和中间代码生成）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>这里是lz大二上的编译原理实验课，课设要求模仿编译器的原理思想，用编译语言设计能够识别单词和简单语法的编译，当时摸了两天左右写了小一千行，在这里再回顾一下思路，并留下对应的源码供参考。</p>
+<p>实验实现的方法有很多种，其中实验一的词法分析部分比较简单，这里重点分析语法分析部分。</p>
+<h1 id="题目需求："><a href="#题目需求：" class="headerlink" title="题目需求："></a>题目需求：</h1><p><img src="https://img-blog.csdnimg.cn/f4e5ff2cb6ef4f089a5f53919efd698a.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="https://img-blog.csdnimg.cn/ac3d41b4770c4bb9957f9571bdfbb2f9.png" srcset="/img/loading.gif" lazyload><img src="https://img-blog.csdnimg.cn/e1489e79494842d4aea4d5ebd2e8a19b.png" srcset="/img/loading.gif" lazyload></p>
+<p> <img src="https://img-blog.csdnimg.cn/6cc9bc7b2085449490925bcabc259c4d.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="实验一：词法分析"><a href="#实验一：词法分析" class="headerlink" title="实验一：词法分析"></a>实验一：词法分析</h1><p>这里用了stl::map等提前存储单词记录出现次数即可。这里就不展开详细描述了。一些具体细节的可参考github中的源码。</p>
+<figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs arduino">map&lt;string, <span class="hljs-type">int</span>&gt; sampleDictionary;<br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">sampleDictionaryInit</span><span class="hljs-params">()</span> <span class="hljs-comment">//写好对应映射</span></span><br><span class="hljs-function"></span>&#123;<br>	sampleDictionary[<span class="hljs-string">&quot;and&quot;</span>] = <span class="hljs-number">1</span>;<br>	sampleDictionary[<span class="hljs-string">&quot;array&quot;</span>] = <span class="hljs-number">2</span>;<br>	...<br>	sampleDictionary[<span class="hljs-string">&quot;[&quot;</span>] = <span class="hljs-number">59</span>;<br>	sampleDictionary[<span class="hljs-string">&quot;]&quot;</span>] = <span class="hljs-number">60</span>;<br>	<span class="hljs-keyword">return</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-comment">//写出一些会用到的工具类函数，和二元式的数据结构</span><br><span class="hljs-keyword">struct</span> DoubleGroup &#123;<br>	<span class="hljs-built_in">int</span> a;<br>	<span class="hljs-built_in">int</span> b;<br>	<span class="hljs-built_in">string</span> Word;<br>	DoubleGroup(<span class="hljs-built_in">string</span> w,<span class="hljs-built_in">int</span> x = <span class="hljs-number">0</span>, <span class="hljs-built_in">int</span> y = <span class="hljs-number">0</span>)<br>	&#123;<br>		Word = w;<br>		a = x;<br>		b = y;<br>	&#125;<br>&#125;;<br>	<span class="hljs-function"><span class="hljs-built_in">bool</span> <span class="hljs-title">isKeyWord</span>(<span class="hljs-params"><span class="hljs-built_in">string</span> input</span>) <span class="hljs-comment">//是 关键字</span></span><br>	&#123;<br>		<span class="hljs-keyword">if</span> (sampleDictionary[input])<br>		&#123;<br>			<span class="hljs-keyword">if</span> (sampleDictionary[input] &gt;= <span class="hljs-number">1</span> &amp;&amp; sampleDictionary[input] &lt;= <span class="hljs-number">35</span>)<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>		&#125;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>	&#125;<br>	<span class="hljs-function"><span class="hljs-built_in">bool</span> <span class="hljs-title">isNum</span>(<span class="hljs-params"><span class="hljs-built_in">char</span> Input</span>) <span class="hljs-comment">//是 数字</span></span><br>	&#123;<br>		<span class="hljs-keyword">if</span> (Input &gt;= <span class="hljs-string">&#x27;0&#x27;</span> &amp;&amp; Input &lt;= <span class="hljs-string">&#x27;9&#x27;</span>)<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>		<span class="hljs-keyword">else</span><br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>	&#125;<br>	<br>	<span class="hljs-function"><span class="hljs-built_in">bool</span> <span class="hljs-title">isLetter</span>(<span class="hljs-params"><span class="hljs-built_in">char</span> Input</span>)<span class="hljs-comment">//是 字母</span></span><br>	&#123;<br>		<span class="hljs-keyword">return</span> (Input &gt;= <span class="hljs-string">&#x27;a&#x27;</span> &amp;&amp; Input &lt;= <span class="hljs-string">&#x27;z&#x27;</span>) || (Input &gt;= <span class="hljs-string">&#x27;A&#x27;</span> &amp;&amp; Input &lt;= <span class="hljs-string">&#x27;Z&#x27;</span>);<br>	&#125;<br>	<span class="hljs-function"><span class="hljs-built_in">bool</span> <span class="hljs-title">isDivided</span>(<span class="hljs-params"><span class="hljs-built_in">string</span> Input</span>) <span class="hljs-comment">//是 分隔符</span></span><br>	&#123;<br>		<span class="hljs-keyword">if</span> (sampleDictionary[Input])<br>		&#123;<br>			<span class="hljs-keyword">if</span> (sampleDictionary[Input] &gt;= <span class="hljs-number">39</span> &amp;&amp; sampleDictionary[Input] &lt;= <span class="hljs-number">60</span>)<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>		&#125;<br>		<span class="hljs-keyword">if</span> (Input == <span class="hljs-string">&quot; &quot;</span> || Input == <span class="hljs-string">&quot;\n&quot;</span>)<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>	&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="实验二：语法分析"><a href="#实验二：语法分析" class="headerlink" title="实验二：语法分析"></a>实验二：语法分析</h1><p> 这里具体展开讲讲实验二中的实现方法</p>
+<p><img src="https://img-blog.csdnimg.cn/7a391a7f0dcc4113ad6f64f0c6ffd3d4.png" srcset="/img/loading.gif" lazyload></p>
+<p> 程序核心思想：<strong><strong>LL(1)分析法</strong></strong>。让产生式右部逐个文法符号与输入串匹配，每当一个文法符号获得匹配，就可以执行语义动作。</p>
+<p>语法分析用到的<strong><strong>函数原型</strong></strong>：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs csharp">   <span class="hljs-comment">//语法分析用到的函数原型：</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">Gramma_analysis</span>()</span>;   <span class="hljs-comment">//语法分析，负责逐字扫描单词，压语义栈，跳转到对应语义动作</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">Gramma_Expression</span>()</span>;  <span class="hljs-comment">//表达式的四元式翻译</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">Gramma_Expression</span>(<span class="hljs-params"><span class="hljs-built_in">int</span></span>)</span>;<br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">Gramma_Assignment</span>()</span>;  <span class="hljs-comment">//赋值句的四元式翻译</span><br>EState&amp; Gramma_Condition(); <span class="hljs-comment">//bool式的四元式翻译，返回整个bool式子的状态E</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">Gramma_FrontQuaternions</span>()</span>; <span class="hljs-comment">//四元式生成前调用，在这里匹配语义栈执行对应语义动作</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">Gramma_Quaternions_MergeJump</span>()</span>; <span class="hljs-comment">//在最终输出前先合并一次jump</span><br></code></pre></td></tr></table></figure>
+
+<p>语法分析用到的<strong>数据结构（struct）</strong>:</p>
+<p>其中，一些表达式的属性需要记录，比如bool表达式需要知道入口，一些条件需要对应的真出口与假出口等，并设置根据链表的回填方法。</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-regexp">//</span>四元组<br>struct Quaternion &#123;<br>	string v1, v2, v3, v4;<br>	int index;<br>	Quaternion(int _index, string _v1 = <span class="hljs-string">&quot;-&quot;</span>, string _v2 = <span class="hljs-string">&quot;-&quot;</span>, string _v3 = <span class="hljs-string">&quot;-&quot;</span>, string _v4 = <span class="hljs-string">&quot;-&quot;</span>)<br>	&#123;<br>		index = _index;<br>		v1 = _v1;<br>		v2 = _v2;<br>		v3 = _v3;<br>		v4 = _v4;<br>	&#125;<br>&#125;;<br>vector&lt;Quaternion&gt; Quaternions；<br><span class="hljs-regexp">//</span>bool表达式的属性<br>struct EState<br>&#123;<br>	int selfpos; <span class="hljs-regexp">//</span>自己在四元组中对应的位置<br>	int _true; <span class="hljs-regexp">//</span>真出口<br>	int _false; <span class="hljs-regexp">//</span>假出口<br>	bool isCorrect; <span class="hljs-regexp">//</span>锁定 真出口&amp;假出口，给e1 or e2 或 e1 and e2情况下使用<br>	EState* _trueList; <span class="hljs-regexp">//</span>回填真出口的链表<br>	EState* _falseList;<span class="hljs-regexp">//</span>回填假出口的链表<br>	EState(int _index) <span class="hljs-regexp">//</span>构造函数<br>	&#123;<br>		selfpos = _index;<br>		_true = -<span class="hljs-number">1</span>;<br>		_false = -<span class="hljs-number">1</span>;<br>		_trueList = NULL;<br>		_falseList = NULL;<br>		isCorrect = false;<br>	&#125;<br>	EState*&amp; GetTlist() <span class="hljs-regexp">//</span>得到需要回填的真出口链表尾<br>	&#123;<br>		<span class="hljs-keyword">if</span> (_trueList == NULL)<br>			return _trueList;<br>		<span class="hljs-keyword">else</span><br>			return _trueList-&gt;GetTlist();<br>	&#125;<br>	EState*&amp; GetFlist() <span class="hljs-regexp">//</span>得到需要回填的假出口链表尾<br>	&#123;...&#125;<br>	void backpatch_T(int <span class="hljs-keyword">exit</span>) <span class="hljs-regexp">//</span>回填真出口<br>	&#123;<br>		_true = <span class="hljs-keyword">exit</span>;<br>		<span class="hljs-keyword">if</span> (selfpos &gt; <span class="hljs-number">0</span> &amp;&amp; !isCorrect)<br>		&#123;<br>			Quaternions[selfpos].v4 = ToString(_true);<br>		&#125;<br>		<span class="hljs-keyword">if</span> (_trueList == NULL)<br>			return;<br>		<span class="hljs-keyword">else</span><br>			_trueList-&gt;backpatch_T(<span class="hljs-keyword">exit</span>);<br>	&#125;<br>	void backpatch_F(int <span class="hljs-keyword">exit</span>)<span class="hljs-regexp">//</span>回填假出口<br>	&#123;...&#125;<br>&#125;;<br><span class="hljs-regexp">//i</span>f <span class="hljs-keyword">while</span> repeat的属性<br>struct if_State<br>&#123;<br>	EState* E;      <span class="hljs-regexp">//</span>对应的bool表达式<br>	int pos_ElseQ;  <span class="hljs-regexp">//</span>如果该<span class="hljs-keyword">if</span>出现了对应的<span class="hljs-keyword">else</span>，要记录该E.false的入口和E.true的出口<br>	if_State(EState&amp; _temp)<br>	&#123;<br>		E = &amp;_temp;<br>		pos_ElseQ = -<span class="hljs-number">1</span>;<br>	&#125;<br>	void backpatch_T(int <span class="hljs-keyword">exit</span>)<br>	&#123;<br>		E-&gt;backpatch_T(<span class="hljs-keyword">exit</span>);<br>	&#125;<br>	void backpatch_F(int <span class="hljs-keyword">exit</span>)<br>	&#123;<br>		E-&gt;backpatch_F(<span class="hljs-keyword">exit</span>);<br>	&#125;<br><br>&#125;;<br>struct while_State<br>&#123;<br>	int Enter; <span class="hljs-regexp">//</span><span class="hljs-keyword">while</span>入口编号<br>	EState* E; <span class="hljs-regexp">//</span>对应的bool表达式<br>	void backpatch_T(int <span class="hljs-keyword">exit</span>)<br>	&#123;<br>		E-&gt;backpatch_T(<span class="hljs-keyword">exit</span>);<br>	&#125;<br>	void backpatch_F(int <span class="hljs-keyword">exit</span>)<br>	&#123;<br>		E-&gt;backpatch_F(<span class="hljs-keyword">exit</span>);<br>	&#125;<br>	while_State(EState&amp; _temp,int _enter = _curr_index)<br>	&#123;<br>		E = &amp;_temp;<br>		Enter = _enter;<br>	&#125;<br>&#125;;<br>struct repeat_State<br>&#123;<br>	int Enter; <span class="hljs-regexp">//</span>repeat入口编号<br>	EState* E; <span class="hljs-regexp">//</span>对应的bool表达式<br>	repeat_State(int _enter)<br>	&#123;<br>		Enter = _enter;<br>		E = NULL;<br>	&#125;<br>	void backpatch_T(int <span class="hljs-keyword">exit</span>)<br>	&#123;<br>		E-&gt;backpatch_T(<span class="hljs-keyword">exit</span>);<br>	&#125;<br>	void backpatch_F(int <span class="hljs-keyword">exit</span>)<br>	&#123;<br>		E-&gt;backpatch_F(<span class="hljs-keyword">exit</span>);<br>	&#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p><strong><strong>存储struct的存储结构（STL）如下</strong></strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs cpp">stack&lt;string&gt; StateStack; <span class="hljs-comment">//语义栈 只会出现if\else\then\while\do的动作符</span><br><br>stack&lt;if_State&gt; ifStack;<br><br>stack&lt;while_State&gt; whileStack;<br><br>stack&lt;repeat_State&gt; repeatState;<br><br>list&lt;EState&gt; e_Storage;   <span class="hljs-comment">//bool表达式、储存ei条件的状态</span><br><br>list&lt;EState&gt; E_stateList; <span class="hljs-comment">//储存E条件的状态</span><br></code></pre></td></tr></table></figure>
+
+<p>*<em><strong>语法分析</strong></em>*****Gramma_analysis()****<strong><strong>函数</strong></strong>：（通过Quaternions.push_back（）生成四元组）</p>
+<p>实验一中已将每个单词存入words数组（string）中，通过扫描words数组的单词，当该单词有对应的语义动作时，调用对应的语义动作：</p>
+<ol>
+<li> 当前单词为****:=<strong><strong>时，调用赋值句的生成函数</strong></strong>Gramma_Assignment();****</li>
+<li> 当前单词为<strong><strong>if\while\until</strong></strong>时：先调用****Gramma_Condition()****生成对应的bool表达式和四元式，然后生成自身的属性，压入语义栈</li>
+<li> 当前单词为<strong><strong>else\repeat\then\do</strong></strong>时:压入语义栈</li>
+</ol>
+<p> 这里写一下对应的伪代码</p>
+<figure class="highlight nim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs nim"><span class="hljs-type">void</span> sampleAnalyze::<span class="hljs-type">Gramma_analysis</span>()<br>&#123;<br>	<span class="hljs-keyword">while</span> (循环单词表)<br>	&#123;<br>		<span class="hljs-meta">&#123;...&#125;</span><br>		<span class="hljs-keyword">if</span> (如果当前单词为:=)<br>		&#123;<br>			<span class="hljs-type">Gramma_Assignment</span>();<br>		&#125;<br>		<span class="hljs-keyword">if</span> (如果当前单词为<span class="hljs-string">&quot;if&quot;</span>)<br>		&#123;<br>			<span class="hljs-type">Gramma_FrontQuaternions</span>();<br>			ifStack.push(<span class="hljs-type">Gramma_Condition</span>());<br>			<span class="hljs-type">StateStack</span>.push(<span class="hljs-string">&quot;if&quot;</span>);<br>		&#125;<br>		<span class="hljs-keyword">if</span> (如果当前单词为<span class="hljs-string">&quot;while&quot;</span>)<br>		&#123;<br>			<span class="hljs-type">Gramma_FrontQuaternions</span>();<br>			<span class="hljs-type">int</span> _enter = _curr_index;<br>			whileStack.push( while_State(<span class="hljs-type">Gramma_Condition</span>(),_enter) );<br>			<span class="hljs-type">StateStack</span>.push(<span class="hljs-string">&quot;while&quot;</span>);<br>		&#125;<br>		<span class="hljs-keyword">if</span> (如果当前单词为<span class="hljs-string">&quot;repeat&quot;</span>)<br>		&#123;<br>			repeatState.push( repeat_State(-<span class="hljs-number">1</span>) ); //标记需要回填repeat的入口<br>		&#125;<br>		<span class="hljs-keyword">if</span> (如果当前单词为<span class="hljs-string">&quot;then&quot;</span>/<span class="hljs-string">&quot;else&quot;</span>/<span class="hljs-string">&quot;do&quot;</span>)<br>		&#123;<br>             //压入语义栈<br>			<span class="hljs-type">StateStack</span>.push(<span class="hljs-string">&quot;then&quot;</span>)/<span class="hljs-type">StateStack</span>.push(<span class="hljs-string">&quot;else&quot;</span>)/<span class="hljs-type">StateStack</span>.push(<span class="hljs-string">&quot;do&quot;</span>);<br>		&#125;<br>		<span class="hljs-keyword">if</span> (如果当前单词为<span class="hljs-string">&quot;until&quot;</span>)<br>		&#123;<br>			repeatState.top().E = &amp;<span class="hljs-type">Gramma_Condition</span>();<br>			repeatState.top().backpatch_F(repeatState.top().<span class="hljs-type">Enter</span>);//假出口为repeat的入口<br>			repeatState.top().backpatch_T(_curr_index);//真出口为until下一行<br>	repeatState.pop();<br>		&#125;;<br><span class="hljs-meta">&#123;...&#125;</span><br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>*<em><strong>赋值式的处理</strong></em>*****Gramma_Assignment()*<em><strong><strong><strong>：</strong></strong> 标记：=位置，调用算式表达式处理</strong></em>*Gramma_Expression()****后，生成对应四元式。</p>
+<p>*<em><strong>算式表达式处理</strong></em>*****Gramma_Expression()****<strong><strong>：</strong></strong>扫描整个算式符，标记加减+-；乘除*/的位置，先计算乘除*/，再计算加减+-，生成四元式</p>
+<figure class="highlight nim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs nim"><span class="hljs-type">void</span> sampleAnalyze::<span class="hljs-type">Gramma_Expression</span>()<br>&#123;<br>	list&lt;<span class="hljs-type">int</span>&gt; multip_division; //乘除标志位<br>	list&lt;<span class="hljs-type">int</span>&gt; add_sub; //加减标志位<br>	<span class="hljs-keyword">while</span> (遍历算式表达式)<br>	&#123;<br>		<span class="hljs-keyword">if</span> (如果当前单词为<span class="hljs-string">&quot;*&quot;</span> || 如果当前单词为<span class="hljs-string">&quot;/&quot;</span>)<br>		&#123;<br>			记录该单词位置<br>		&#125;<br>	&#125;<br>	<span class="hljs-type">Gramma_FrontQuaternions</span>();<br>	//处理乘除，再处理加减<br>	<span class="hljs-keyword">while</span> (遍历标记的所有乘除位置)<br>	&#123;<br>		根据标记位置的前后单词，产生四元式，产生中间代码<span class="hljs-type">Ti</span><br>	&#125;<br>     按照同样逻辑再处理加减运算符<br>	<span class="hljs-meta">&#123;...&#125;</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong><strong>Bool表达式的分析</strong>*****<em>Gramma_Condition()*<em><strong><strong><strong>：</strong></strong> 先生成一个</strong></em>*E</em>*</strong>表示该个条件式的属性，扫描bool表达式</p>
+<p>，每当扫描到&gt;= = &lt;= &gt; &lt; 时<strong><strong>生成两个四元组</strong></strong>和一个<strong><strong>ei</strong></strong>，并调用Gramma_Expression()</p>
+<p>,e和E的属性使用EState（struct）记录，ei与ej，E之间的关系如下：</p>
+<ol>
+<li> <strong><strong>当E -&gt; e1 时</strong></strong>，e1和E同true和false出口</li>
+<li> <strong><strong>当E -&gt; e1 or e2 时</strong></strong>，e1.false = e2.pos , e1.true = e2.true = E.true, e2.false = E.false</li>
+<li> <strong><strong>当E -&gt; e1 and e2 时</strong></strong>,e1.true = e2.pos , e1.false = e2.false = E.false, e2.true = E.true</li>
+</ol>
+<p>不同属性的EState真假出口的通过<strong><strong>链表拉链</strong></strong>的方式等待回填，函数结束时<strong><strong>返回E的地址</strong></strong>，留给if\while\repeat属性中的EState*记录</p>
+<figure class="highlight nim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs nim"><span class="hljs-type">bool</span> <span class="hljs-type">IsCondition</span>(<span class="hljs-type">string</span> op) //是 <span class="hljs-type">bool</span> 符<br>	&#123;<br>		<span class="hljs-keyword">return</span> (op == <span class="hljs-string">&quot;&lt;&quot;</span>) || (op == <span class="hljs-string">&quot;&lt;=&quot;</span>) || (op == <span class="hljs-string">&quot;=&quot;</span>) || (op == <span class="hljs-string">&quot;&gt;&quot;</span>) || (op == <span class="hljs-string">&quot;&gt;=&quot;</span>);<br>	&#125;<br><span class="hljs-type">EState</span>&amp; sampleAnalyze::<span class="hljs-type">Gramma_Condition</span>()<br>&#123;<br>	生成E<br>	<span class="hljs-keyword">while</span> (遍历<span class="hljs-type">bool</span>表达式)<br>	&#123;<br>		<span class="hljs-keyword">if</span> (如果读取到了标识符/字符串/数字)<br>		&#123;<br>			<span class="hljs-type">Gramma_Expression</span>(_temp_rp);<br>		&#125;<br>		<span class="hljs-keyword">if</span> (op == <span class="hljs-string">&quot;&lt;&quot;</span>) || (op == <span class="hljs-string">&quot;&lt;=&quot;</span>) || (op == <span class="hljs-string">&quot;=&quot;</span>) || (op == <span class="hljs-string">&quot;&gt;&quot;</span>) || (op == <span class="hljs-string">&quot;&gt;=&quot;</span>) <br>		&#123;<br>			<span class="hljs-type">Gramma_Expression</span>(_temp_rp + <span class="hljs-number">1</span>);<br>			<span class="hljs-keyword">if</span>(如果当前没有标记过的<span class="hljs-keyword">or</span>/<span class="hljs-keyword">and</span>)<br>			&#123; <br>				生成ei<br>				生成四元式*<span class="hljs-number">2</span> <br>                  链表拉链ei与E的真假出口挂钩<br>			&#125;<br>			<span class="hljs-keyword">else</span> <br>			&#123;<br>				<span class="hljs-keyword">if</span> (存在标记过的<span class="hljs-keyword">or</span>)<br>				&#123;<br>					生成ei<br>				    生成四元式*<span class="hljs-number">2</span> <br>                      链表拉链ei与ei-<span class="hljs-number">1</span>和E的真假出口挂钩<br>                      弹出该<span class="hljs-keyword">or</span>的位置<br>				&#125;<br>				<span class="hljs-keyword">if</span> (存在标记过的<span class="hljs-keyword">and</span>)<br>				<span class="hljs-meta">&#123;...&#125;</span><br>			&#125;<br>		&#125;<br>		<span class="hljs-keyword">if</span> (如果读取到了<span class="hljs-keyword">and</span>)<br>		&#123;<br>			标记<span class="hljs-keyword">and</span>位置<br>			<span class="hljs-keyword">if</span>(orPoint + andPoint &gt; <span class="hljs-number">1</span>)<br>			&#123;<br>				抛出报错：多余的<span class="hljs-keyword">and</span>/<span class="hljs-keyword">or</span><br>			&#125;<br>		&#125;<br>		<span class="hljs-meta">&#123;...&#125;</span><br>	<span class="hljs-keyword">return</span> E的地址<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong><strong>检查语义栈，回填E的出入口</strong>*****<em>Gramma_FrontQuaternions()*<em><strong><strong><strong>：</strong></strong>在</strong></em>*每次生成四元组前会调用一次</em>*</strong>，检查语义栈顶的动作词并执行相应动作：</p>
+<p>While(语义栈不为空）{</p>
+<ol>
+<li> <strong><strong>栈顶为</strong></strong><strong><strong>“if”</strong>******:**</strong>(1)如果if.false未回填，回填if.false，否则（if.false已经被else回填情况下）回填已经标记好的if.true出口,continue</li>
+</ol>
+<p><strong><strong>2.栈顶为</strong></strong>****”<strong><strong><strong><strong>else</strong></strong></strong></strong>“********:****回填if.false，break</p>
+<p>*<em><strong>3.<strong><strong><strong><strong>栈顶为</strong></strong></strong></strong>“<strong><strong><strong><strong>do</strong></strong></strong></strong>“</strong></em>*****:****回填while.true，break</p>
+<p>*<em><strong>4.<strong><strong><strong><strong>栈顶为</strong></strong></strong></strong>“<strong><strong><strong><strong>then</strong></strong></strong></strong>“</strong></em>*****:****回填if.true，break</p>
+<p>*<em><strong>5.<strong><strong><strong><strong>栈顶为</strong></strong></strong></strong>“<strong><strong><strong><strong>while</strong></strong></strong></strong>“</strong></em>*****:****生成四元组（j,-,-,while.enter）,然后再回填while.false,continue</p>
+<p>*<em><strong>6.<strong><strong><strong><strong>栈顶为</strong></strong></strong></strong>“<strong><strong><strong><strong>repeat</strong></strong></strong></strong>“</strong></em>*****:****标记repeat入口,continue</p>
+<p>}</p>
+<p>如出现一些异常情况：如if.false已经回填了栈顶依然出现了‘else’，程序会抛出报错</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><code class="hljs awk">void sampleAnalyze::Gramma_FrontQuaternions()<br>&#123;<br>	<span class="hljs-keyword">while</span> (!StateStack.empty())<br>	&#123;<br>		<span class="hljs-keyword">if</span> (StateStack.top() == <span class="hljs-string">&quot;if&quot;</span>)<br>		&#123;<br>			<span class="hljs-keyword">if</span> (ifStack.top().E-&gt;_true != -<span class="hljs-number">1</span> &amp;&amp; ifStack.top().E-&gt;_false == -<span class="hljs-number">1</span>) <br><span class="hljs-regexp">//</span>true出口已回填，false出口未回填(无<span class="hljs-keyword">else</span>情况)<br>			&#123;<br>				ifStack.top().backpatch_F(_curr_index); <span class="hljs-regexp">//</span>回填false出口<br>			&#125;<br>			<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (ifStack.top().E-&gt;_true == -<span class="hljs-number">1</span>) <span class="hljs-regexp">//</span>true出口未回填<br>			&#123;<br>				cout &lt;&lt; <span class="hljs-string">&quot;语法分析错误：if缺少then&quot;</span>;<br>				abort();<br>			&#125;<br>			<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (ifStack.top().E-&gt;_true != -<span class="hljs-number">1</span> &amp;&amp; ifStack.top().E-&gt;_false != -<span class="hljs-number">1</span>) <br><span class="hljs-regexp">//</span>true出口\false出口已回填(有<span class="hljs-keyword">else</span>情况)<br>			&#123;<br>				Quaternions[ifStack.top().pos_ElseQ].v4 = ToString(_curr_index); <br><span class="hljs-regexp">//</span>回填<span class="hljs-keyword">if</span>-<span class="hljs-keyword">exit</span>的出口<br>			&#125;<br>			ifStack.pop();<br>			StateStack.pop();<br>			<span class="hljs-keyword">continue</span>;<br>		&#125;<br>		<span class="hljs-keyword">if</span> (StateStack.top() == <span class="hljs-string">&quot;else&quot;</span>)<br>		&#123;<br>			<span class="hljs-keyword">if</span> (ifStack.top().E-&gt;_true != -<span class="hljs-number">1</span> &amp;&amp; ifStack.top().E-&gt;_false == -<span class="hljs-number">1</span>) <span class="hljs-regexp">//</span>true出口已回填，false出口未回填<br>			&#123;<br>				ifStack.top().pos_ElseQ = _curr_index;	<span class="hljs-regexp">//</span>标记<span class="hljs-keyword">if</span>-<span class="hljs-keyword">exit</span>的出口<br>				Quaternions.push_back(Quaternion(_curr_index++,<span class="hljs-string">&quot;j&quot;</span>));<br>				ifStack.top().backpatch_F(_curr_index); <span class="hljs-regexp">//</span>回填假出口<br>			&#125;<br>			<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (ifStack.top().E-&gt;_true != -<span class="hljs-number">1</span> &amp;&amp; ifStack.top().E-&gt;_false != -<span class="hljs-number">1</span>) <span class="hljs-regexp">//</span>true出口已回填，false出口未回填<br>			&#123;<br>				cout &lt;&lt; <span class="hljs-string">&quot;语法分析错误：出现了多余的else&quot;</span>;<br>				abort();<br>			&#125;<br>			<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (ifStack.top().E-&gt;_true == -<span class="hljs-number">1</span>) <span class="hljs-regexp">//</span>true出口未回填<br>			&#123;<br>				cout &lt;&lt; <span class="hljs-string">&quot;语法分析错误：if缺少then&quot;</span>;<br>				abort();<br>			&#125;<br>			StateStack.pop(); <span class="hljs-regexp">//</span>弹出then<br>			<span class="hljs-keyword">break</span>;<br>		&#125;<br>		<span class="hljs-keyword">if</span> (StateStack.top() == <span class="hljs-string">&quot;then&quot;</span>)<br>		&#123;<br>			<span class="hljs-keyword">if</span> (ifStack.top().E-&gt;_true != -<span class="hljs-number">1</span>) <span class="hljs-regexp">//</span>true出口已回填<br>			&#123;<br>				cout &lt;&lt; <span class="hljs-string">&quot;语法分析错误：多余的then出现&quot;</span>;<br>				abort();<br>			&#125;<br>			<span class="hljs-keyword">if</span> (ifStack.top().E-&gt;_true == -<span class="hljs-number">1</span>) <span class="hljs-regexp">//</span>true出口未回填<br>			&#123;<br>				ifStack.top().backpatch_T(_curr_index); <span class="hljs-regexp">//</span>回填<span class="hljs-keyword">if</span>.true<br>			&#125;<br>			StateStack.pop();<br>			<span class="hljs-keyword">break</span>;<br>		&#125;<br><br>		<span class="hljs-keyword">if</span> (StateStack.top() == <span class="hljs-string">&quot;while&quot;</span>)<br>		&#123;<br>			<span class="hljs-keyword">if</span> (whileStack.top().E-&gt;_true == -<span class="hljs-number">1</span>) <span class="hljs-regexp">//</span><span class="hljs-keyword">while</span>.true出口未被回填<br>			&#123;<br>				cout &lt;&lt; <span class="hljs-string">&quot;语法分析错误：while缺少do&quot;</span>;<br>				abort();<br>			&#125;<br>			<span class="hljs-regexp">//</span>产生新四元式(循环回调）<br>			Quaternions.push_back(Quaternion(_curr_index++, <span class="hljs-string">&quot;j&quot;</span>, <span class="hljs-string">&quot;-&quot;</span>, <span class="hljs-string">&quot;-&quot;</span>, ToString(whileStack.top().Enter)));<br>			whileStack.top().backpatch_F(_curr_index);<span class="hljs-regexp">//</span>回填<span class="hljs-keyword">while</span>.false出口<br><br>			whileStack.pop();<br>			StateStack.pop();<br>			<span class="hljs-keyword">continue</span>;<br>		&#125;<br>		<span class="hljs-keyword">if</span> (StateStack.top() == <span class="hljs-string">&quot;do&quot;</span>)<br>		&#123;<br>			<span class="hljs-keyword">if</span> (whileStack.top().E-&gt;_true != -<span class="hljs-number">1</span>) <span class="hljs-regexp">//</span><span class="hljs-keyword">while</span>.true出口已被回填<br>			&#123;<br>				cout &lt;&lt; <span class="hljs-string">&quot;语法分析错误：多余的do出现&quot;</span>;<br>				abort();<br>			&#125;<br>			<span class="hljs-regexp">//</span>回填<span class="hljs-keyword">while</span>.true出口<br>			whileStack.top().backpatch_T(_curr_index);<br><br>			StateStack.pop();<br>			<span class="hljs-keyword">break</span>;<br>		&#125;<br>	&#125;<br><span class="hljs-regexp">//</span>有需要回填的repeat出口(写在这里的目的是为了先把<span class="hljs-keyword">else</span>的四元式生成完)<br>	<span class="hljs-keyword">if</span> (!repeatState.empty() &amp;&amp; repeatState.top().Enter == -<span class="hljs-number">1</span>) <br>	&#123;<br>		repeatState.top().Enter = _curr_index;<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>在所有语法分析完成后，合并jump，调用****PrintQuatrenions()****输出所有四元式，程序结束</p>
+<figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs scss">void <span class="hljs-built_in">PrintQuatrenions</span>()<br>&#123;<br>	for (int i = <span class="hljs-number">0</span>; i &lt; Quaternions.size(); <span class="hljs-selector-tag">i</span>++)<br>	&#123;<br>		<span class="hljs-built_in">printf</span>(&quot;(%d) (%s,%s,%s,%s)\n&quot;, Quaternions<span class="hljs-selector-attr">[i]</span><span class="hljs-selector-class">.index</span>,<br>			Quaternions<span class="hljs-selector-attr">[i]</span><span class="hljs-selector-class">.v1</span><span class="hljs-selector-class">.c_str</span>(),<br>			Quaternions<span class="hljs-selector-attr">[i]</span><span class="hljs-selector-class">.v2</span><span class="hljs-selector-class">.c_str</span>(),<br>			Quaternions<span class="hljs-selector-attr">[i]</span><span class="hljs-selector-class">.v3</span><span class="hljs-selector-class">.c_str</span>(),<br>			Quaternions<span class="hljs-selector-attr">[i]</span><span class="hljs-selector-class">.v4</span><span class="hljs-selector-class">.c_str</span>());<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="Github源码"><a href="#Github源码" class="headerlink" title="Github源码"></a>Github源码</h1><p>对应的项目源码已贴，欢迎大家参考</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/sugarzo/SampleCompilation" title="GitHub - sugarzo/SampleCompilation: 大二编译原理课设-Sample语言的词法/语法分析器（c++）">GitHub - sugarzo/SampleCompilation: 大二编译原理课设-Sample语言的词法/语法分析器（c++）</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/C/">#C++</a>
+      
+        <a href="/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">#编译原理</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/05/21/Unity%E6%A1%86%E6%9E%B6%E5%BC%80%E5%8F%91%EF%BC%88%E4%B8%80%EF%BC%89/" title="Unity 状态机事件流程框架 (一)（C#事件系统，Trigger与Action）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Unity 状态机事件流程框架 (一)（C#事件系统，Trigger与Action）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/05/17/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%A4%A7%E4%BD%9C%E4%B8%9A-DBLP%E7%A7%91%E5%AD%A6%E6%96%87%E7%8C%AE%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F-%E6%A6%82%E8%BF%B0%20%EF%BC%88C++C#Unity%EF%BC%8Cgithub%E6%BA%90%E7%A0%81%EF%BC%89_Sugarzo%E7%9A%84%E5%8D%9A%E5%AE%A2/" title="数据结构大作业DBLP科学文件管理系统 概述">
+                        <span class="hidden-mobile">数据结构大作业DBLP科学文件管理系统 概述</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
